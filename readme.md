@@ -1,258 +1,59 @@
-# Blucks AI
+# Blucks AI — Multimodal Sports Analytics
 
-An AI-powered sports intelligence platform that enables analysts, coaches, and sports organizations to query game footage and match data using natural language.
+Ask questions about games in plain English and get answers grounded in real match data and footage. Blucks AI combines structured game data, video transcripts, and Gemini Flash in a multimodal RAG pipeline, so responses cite what actually happened instead of what the model guesses.
 
-Blucks AI combines Retrieval-Augmented Generation (RAG), multimodal AI, and video understanding to transform raw game footage and structured statistics into actionable insights.
-
-## Overview
-
-Blucks AI was built to reduce the time required to analyze sports matches by allowing users to ask questions about games, players, teams, and events in plain English.
-
-The platform processes both structured game data and video transcripts, creating a unified knowledge layer that supports contextual question answering and automated insight generation.
-
-### Key Capabilities
-
-* Natural language querying of sports data
-* Retrieval-Augmented Generation (RAG) pipeline
-* Video transcript indexing and retrieval
-* Timestamp-aware game analysis
-* Contextual match intelligence
-* Real-time insight generation
-* Hallucination-resistant response framework
+**Stack:** Python · Gemini Flash · RAG · FFmpeg · Flask · React · TypeScript · Google Cloud
 
 ---
 
-## Features
+## Highlights
 
-### Sports Intelligence Search
+- **Multimodal RAG.** Retrieves relevant match context from structured game data and video transcripts, then grounds Gemini Flash's answer in it — enabling natural-language analysis across historical records and footage.
+- **~83% faster inference.** Chunking game footage into timestamped 30-second segments cut per-segment latency from **~4.1s to ~0.7s**.
+- **Evaluation harness.** 50+ test queries targeting ambiguous stats and missing context, used to add prompt guardrails that improved response consistency on hallucination-prone edge cases.
 
-Query across:
+## How it works
 
-* Match statistics
-* Player performance data
-* Event timelines
-* Video transcripts
-* Historical game records
-
-Example:
-
-```text
-How many successful passes did Team A complete in the second half?
+```
+game footage ──► 30-second timestamped segments ──► Gemini Flash
+structured game data + transcripts ──► retrieval
+                                            │
+user question ──────────────────────────────┤
+                                            ▼
+                  grounded answer + timestamped clips
 ```
 
-```text
-Show every offensive sequence involving Player X between the 60th and 75th minute.
+1. **Segment.** Footage is split into timestamped 30-second chunks, so the model only processes the part of the game that matters.
+2. **Retrieve.** For each question, the most relevant game data, transcript passages, and segments are pulled as context.
+3. **Answer.** Gemini Flash answers using only the retrieved context and returns commentary with start/end timestamps.
+4. **Clip.** FFmpeg trims each returned moment into its own video clip.
+
+### Example questions
+
+```
+Show every home run in this game.
+Which plays in the 7th inning changed the score?
 ```
 
----
+## Guardrails
 
-### Multimodal Video Understanding
+The evaluation harness targets cases where LLMs tend to hallucinate:
 
-Game footage is automatically:
+- Conflicting or ambiguous statistics
+- Incomplete transcripts
+- Ambiguous player references
+- Questions the available context can't answer
 
-1. Segmented into 30-second intervals
-2. Processed with Gemini Flash
-3. Enriched with timestamp metadata
-4. Indexed for retrieval
+Prompt guardrails make the model return an empty result instead of inventing a moment when nothing matches.
 
-This architecture reduces analysis latency while maintaining contextual relevance.
+## Running locally
 
----
-
-### Retrieval-Augmented Generation (RAG)
-
-The system combines:
-
-* Structured sports datasets
-* Video transcript embeddings
-* Semantic retrieval
-* Gemini Flash reasoning
-
-This enables grounded responses that reference actual game events rather than relying solely on model memory.
-
----
-
-### Evaluation & Guardrails
-
-The platform includes:
-
-* Prompt guardrails
-* Response validation
-* Edge-case testing
-* Ambiguity handling
-* Missing-context detection
-
-A dedicated test harness evaluates performance across hallucination-prone scenarios such as:
-
-* Conflicting statistics
-* Incomplete transcripts
-* Ambiguous player references
-* Missing game context
-
----
-
-## Technical Architecture
-
-### AI Stack
-
-* Gemini Flash
-* Retrieval-Augmented Generation (RAG)
-* Vector Search
-* Python
-
-### Data Sources
-
-* Structured game statistics
-* Match metadata
-* Video transcripts
-* Event timelines
-
-### Pipeline
-
-```text
-Game Footage
-      ↓
-Video Segmentation
-      ↓
-Transcript Generation
-      ↓
-Embedding Creation
-      ↓
-Vector Database
-      ↓
-Retriever
-      ↓
-Gemini Flash
-      ↓
-Context-Aware Response
-```
-
----
-
-## Performance
-
-### Inference Optimization
-
-By chunking footage into timestamped 30-second segments:
-
-| Metric                  | Before   | After         |
-| ----------------------- | -------- | ------------- |
-| Average Processing Time | 4.1s     | 0.7s          |
-| Review Time             | Baseline | 85% Reduction |
-| Retrieval Precision     | Improved | Context-Aware |
-
----
-
-## Environment Setup
-
-### Prerequisites
-
-* Docker
-* Docker Compose
-* Python 3.10+
-* Google Cloud Credentials
-* Gemini API Access
-
----
-
-## Configuration
-
-Create a `.env` file in the project root:
-
-```env
-GEMINI_API_KEY=your_gemini_api_key
-```
-
-Set Google credentials:
+Requirements: Docker, a Gemini API key, and a Google Cloud project (Storage + Firestore).
 
 ```bash
-export GOOGLE_APPLICATION_CREDENTIALS=/path/to/google_credentials.json
-```
-
----
-
-## Running the Project
-
-### Development Mode
-
-Runs the application with hot reload enabled.
-
-```bash
-docker-compose -f docker-compose.dev.yml down
+# backend/.env
+GEMINI_API_KEY=your_key_here
 
 docker-compose -f docker-compose.dev.yml build
-
 docker-compose -f docker-compose.dev.yml up
 ```
-
----
-
-### Production Mode
-
-Nginx deployment support is currently under development.
-
-```bash
-Coming Soon
-```
-
----
-
-## Example Queries
-
-```text
-What were the key momentum shifts in the second half?
-```
-
-```text
-Show every shot attempt by Player 10.
-```
-
-```text
-When did Team B begin applying a high press?
-```
-
-```text
-Summarize the final 15 minutes of the match.
-```
-
----
-
-## Roadmap
-
-* Live match analysis
-* Multi-sport support
-* Advanced analytics dashboards
-* Automated scouting reports
-* Video clip generation
-* Coach-focused tactical summaries
-* Real-time event detection
-* Mobile application support
-
----
-
-## Tech Stack
-
-* Python
-* Gemini Flash
-* Retrieval-Augmented Generation (RAG)
-* Docker
-* Vector Search
-* NLP Pipelines
-* Video Processing
-* Google Cloud
-
----
-
-## License
-
-This project is proprietary software. All rights reserved.
-
----
-
-## Authors
-
-**Numer Ahmed, Jaehooon Son , Carson Lin**
-
-AI Engineer
-
-Building AI systems that bridge structured data, video intelligence, and natural language interaction for sports analytics.
